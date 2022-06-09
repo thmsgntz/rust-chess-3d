@@ -7,3 +7,9 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.7.0"
+bevy_mod_picking = "0.6.1"  # https://github.com/aevyrie/bevy_mod_picking/
+
+# Enable only a small amount of optimization in debug mode
+# See: https://bevy-cheatbook.github.io/pitfalls/performance.html
+[profile.dev]
+opt-level = 1

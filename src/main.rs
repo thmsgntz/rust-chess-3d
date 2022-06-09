@@ -1,67 +1,19 @@
+mod pieces;
+mod borad;
+
 use bevy::prelude::*;
+use bevy::window::PresentMode;
+use bevy_mod_picking::*;
 
 mod settings {
     use bevy::window::WindowMode;
 
-    pub static NAME: &str = "Chess Game by Bueur Games";
+    pub static NAME: &str = "Chess Game by Buer Games";
     pub const WINDOW_WIDTH: f32 = 1200.;
     pub const WINDOW_HEIGHT: f32 = 600.;
     pub const WINDOW_POSITION_X: f32 = 50.;
     pub const WINDOW_POSITION_Y: f32 = 25.;
     pub const WINDOW_MODE: WindowMode = WindowMode::Windowed;
-}
-
-fn create_pieces (
-    mut commands:Commands,
-    asset_server: Res<AssetServer>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    // Load all the meshes
-    let king_handle: Handle<Mesh> =
-        asset_server.load("ressources/pieces.glb#Mesh0/Primitive0");
-
-
-    let black_material = materials.add(Color::rgb(0., 0.2, 0.2).into());
-
-    commands
-        // Spawn parent entity
-        .spawn_bundle(PbrBundle {
-            mesh: king_handle.clone(),
-            material: black_material.clone(),
-            transform: {
-                let mut transform = Transform::from_translation(Vec3::new(-0.2, 0., -1.9));
-                transform.apply_non_uniform_scale(Vec3::new(0.2, 0.2, 0.2));
-                transform
-            },
-            ..Default::default()
-        });
-}
-
-fn create_board (
-    mut commands:Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-)
-{
-    // Add meshes and materials
-    let mesh = meshes.add(Mesh::from(shape::Plane{size: 1.}));
-    let white_material = materials.add(Color::rgb(1., 0.9, 0.9).into());
-    let black_material = materials.add(Color::rgb(0., 0.1, 0.1).into());
-
-    for i in 0..8  {
-        for j in 0..8 {
-            commands.spawn_bundle(PbrBundle{
-                mesh: mesh.clone(),
-                material: if (i + j + 1) % 2 == 0 {
-                    white_material.clone()
-                } else {
-                    black_material.clone()
-                },
-                transform: Transform::from_translation(Vec3::new(i as f32, 0., j as f32)),
-                ..Default::default()
-            });
-        }
-    }
 }
 
 fn setup (
@@ -80,10 +32,13 @@ fn setup (
         Quat::from_xyzw(-0.3, -0.5, -0.3, 0.5).normalize(),
         Vec3::new(-7.0, 20.0, 4.0)));
 
-    commands.spawn_bundle(camera);
+    commands
+        .spawn_bundle(camera)
+        .insert_bundle(PickingCameraBundle::default());
 
     // Light
-    commands.spawn_bundle(PointLightBundle  {
+    commands
+        .spawn_bundle(PointLightBundle  {
             transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
             ..Default::default()
         });
@@ -102,11 +57,15 @@ fn main() {
             height: settings::WINDOW_HEIGHT,
             position: Vec2::new(settings::WINDOW_POSITION_X, settings::WINDOW_POSITION_Y).into(),
             mode: settings::WINDOW_MODE,
+            present_mode: PresentMode::Mailbox,
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPickingPlugins) // <- Adds Picking, Interaction, and Highlighting plugins.
+        //.add_plugin(DebugCursorPickingPlugin) // <- Adds the green debug cursor.
+        //.add_plugin(DebugEventsPickingPlugin) // <- Adds debug event logging.
+        .add_plugin(borad::BoardPlugin)
         .add_startup_system(setup)
-        .add_system(create_board)
-        .add_system(create_pieces)
+        .add_startup_system(pieces::create_pieces)
         .run();
 }
