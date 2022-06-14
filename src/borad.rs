@@ -1,19 +1,16 @@
 use bevy::prelude::*;
 use bevy_mod_picking::*;
 
-
 pub struct BoardPlugin;
 impl Plugin for BoardPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SelectedSquare>()
             .add_startup_system(create_board)
-            .add_system(color_squares)
-            .add_system(select_square);
+            .add_system_to_stage(CoreStage::PostUpdate, select_square);
     }
 }
 
-
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Square {
     pub x: u8,
     pub y: u8,
@@ -43,107 +40,41 @@ pub fn create_board (
 {
     // Add meshes and materials
     let mesh = meshes.add(Mesh::from(shape::Plane{size: 1.}));
-    // let white_material = materials.add(Color::rgb(1., 0.9, 0.9).into());
-    // let black_material = materials.add(Color::rgb(0., 0.1, 0.1).into());
+    let white_material = materials.add(Color::rgb(1., 0.9, 0.9).into());
+    let black_material = materials.add(Color::rgb(0., 0.1, 0.1).into());
+    let hovered_material = materials.add(Color::rgb(1., 0.0, 0.0).into());
+    let selected_material = materials.add(Color::rgb(9.,0.,9.).into());
 
     for i in 0..8  {
         for j in 0..8 {
+            let initial_mat = if (i + j + 1) % 2 == 0 {
+                white_material.clone()
+            } else {
+                black_material.clone()
+            };
+
             commands
                 .spawn_bundle(PbrBundle{
                     mesh: mesh.clone(),
-                    material: if (i + j + 1) % 2 == 0 {
-                        // white_material.clone()
-                        materials.add(Color::rgb(1., 0.9, 0.9).into())
-                    } else {
-                        // black_material.clone()
-                        materials.add(Color::rgb(0., 0.1, 0.1).into())
-                    },
+                    material: initial_mat.clone(),
                     transform: Transform::from_translation(Vec3::new(i as f32, 0., j as f32)),
                     ..Default::default()})
-                .insert_bundle(PickableBundle::default())
                 .insert(Square {
                     x: i,
                     y: j,
+                })
+                .insert_bundle(PickableBundle {
+                    pickable_mesh: Default::default(),
+                    interaction: Default::default(),
+                    focus_policy: Default::default(),
+                    pickable_button: PickableButton {
+                        initial: Some(initial_mat.clone()),
+                        hovered: Some(hovered_material.clone()),
+                        pressed: None,
+                        selected: Some(selected_material.clone())},
+                    selection: Default::default(),
+                    hover: Default::default()
                 });
-        }
-    }
-}
-
-
-fn color_squares(
-    mut events: EventReader<PickingEvent>,
-    selected_square: Res<SelectedSquare>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    query: Query<(Entity, &Square, &Handle<StandardMaterial>)>,
-)
-{
-    // Helpful:
-    //  Get entity from Event: https://stackoverflow.com/a/72260406
-    //  bevy_mod_picking event example: https://github.com/aevyrie/bevy_mod_picking/blob/main/examples/events.rs
-    //  bevy_picking doc: https://docs.rs/bevy_mod_picking/latest/bevy_mod_picking/index.html
-    for event in events.iter() {
-        match event {
-            PickingEvent::Hover(e) => {
-                /*  Example of USE:
-
-                     if let HoverEvent::JustEntered(ent) = e {
-                         info!("ID of entity: {}", ent.id());
-                         for (entity, square, handled) in query.iter() {
-                             if entity == *ent {
-                                 info!("\t=>Found !")
-                             }
-                         }
-                     }
-                */
-                info!("\ncolor_squares:: Event: {:?}\n", e);
-                for (entity, square, material_handle) in query.iter() {
-                    let material = materials.get_mut(material_handle).unwrap();
-
-                    if selected_square.entity == Some(entity) {
-                        // I added it first to always see the selected square, in blue
-                        material.base_color = Color::rgb(0.1, 0.1, 0.9);
-
-                    } else if let HoverEvent::JustEntered(hovered_entity) = e {
-                        if *hovered_entity == entity {
-                            info!("Just Entered Entity: {}", entity.id());
-                            material.base_color = Color::rgb(0.8, 0.3, 0.3);
-                        }
-
-                    } else if let HoverEvent::JustLeft(hovered_entity) = e {
-                        if *hovered_entity == entity {
-                            info!("Just Left entity: {} which was {}", entity.id(), square.is_white());
-                            material.base_color = if square.is_white() {
-                                Color::rgb(1., 0.9, 0.9)
-                            } else {
-                                Color::rgb(0., 0.1, 0.1)
-                            }
-                        }
-                    }
-                }
-
-                // for (entity, square, material_handle) in query.iter() {
-                //     // Get the actual material
-                //     let material = materials.get_mut(material_handle).unwrap();
-                //
-                //     // Change the material color
-                //     material.base_color = if let HoverEvent::JustEntered(_entity) = e  {
-                //         info!("first condition true");
-                //         Color::rgb(0.8, 0.3, 0.3)
-                //     } else if Some(entity) == selected_square.entity {
-                //         Color::rgb(0.9, 0.1, 0.1)
-                //     } else if let HoverEvent::JustLeft(_entity) = e {
-                //         if square.is_white() {
-                //             Color::rgb(1., 0.9, 0.9)
-                //         } else {
-                //             Color::rgb(0., 0.1, 0.1)
-                //         }
-                //     } else {
-                //         info!("Sad");
-                //         Color::rgb(0., 0.1, 0.1)
-                //     };
-                // }
-            }
-            _ => {}
         }
     }
 }
@@ -170,6 +101,72 @@ fn select_square(
                     selected_square.entity = None;
                 }
             },
+            _ => {}
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn color_squares(
+    mut events: EventReader<PickingEvent>,
+    selected_square: Res<SelectedSquare>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    query: Query<(Entity, &Square, &Handle<StandardMaterial>)>,
+)
+{
+    // Helpful:
+    //  Get entity from Event: https://stackoverflow.com/a/72260406
+    //  bevy_mod_picking event example: https://github.com/aevyrie/bevy_mod_picking/blob/main/examples/events.rs
+    //  bevy_picking doc: https://docs.rs/bevy_mod_picking/latest/bevy_mod_picking/index.html
+    for event in events.iter() {
+        match event {
+            PickingEvent::Hover(e) => {
+                /*  Example of USE:
+
+                     if let HoverEvent::JustEntered(ent) = e {
+                         info!("ID of entity: {}", ent.id());
+                         for (entity, square, handled) in query.iter() {
+                             if entity == *ent {
+                                 info!("\t=>Found !")
+                             }
+                         }
+                     }
+                */
+                info!("color_squares:: Event: {:?}", e);
+
+                let (HoverEvent::JustEntered(hovered_entity) |
+                HoverEvent::JustLeft(hovered_entity)) = e;
+
+                let (entity, square, material_handle) = query.get(*hovered_entity).unwrap();
+
+                if selected_square.entity == Some(entity) {
+                    // I added it first to always see the selected square, in blue
+                    let material = materials.get_mut(material_handle).unwrap();
+                    material.base_color = Color::rgb(0.9, 0.1, 0.9);
+
+
+                } else if let HoverEvent::JustEntered(hovered_entity) = e {
+                    if *hovered_entity == entity {
+                        let material = materials.get_mut(material_handle).unwrap();
+                        info!("Just Entered Entity: {}", entity.id());
+                        material.base_color = Color::rgb(0.8, 0.3, 0.3);
+                    }
+
+                } else if let HoverEvent::JustLeft(hovered_entity) = e {
+                    if *hovered_entity == entity {
+                        let material = materials.get_mut(material_handle).unwrap();
+                        material.base_color = if square.is_white() {
+                            info!("Just Left entity: {} which was white", entity.id());
+                            Color::rgb(1., 0.9, 0.9)
+                        } else {
+                            info!("Just Left entity: {} which was black", entity.id());
+                            Color::rgb(0., 0.1, 0.1)
+                        };
+                    }
+                }
+
+                info!("\n");
+            }
             _ => {}
         }
     }
