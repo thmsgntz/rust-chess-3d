@@ -1,10 +1,13 @@
 use bevy::prelude::*;
 use bevy_mod_picking::*;
 
+use crate::pieces::*;
+
 pub struct BoardPlugin;
 impl Plugin for BoardPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SelectedSquare>()
+            .init_resource::<SelectedPiece>()
             .add_startup_system(create_board)
             .add_system_to_stage(CoreStage::PostUpdate, select_square);
     }
@@ -29,6 +32,11 @@ https://github.com/bevyengine/bevy/blob/841755aaf23acfd55b375c37390daeb302c5b30b
 */
 #[derive(Default)]
 pub struct SelectedSquare {
+    entity: Option<Entity>,
+}
+
+#[derive(Default)]
+pub struct SelectedPiece {
     entity: Option<Entity>,
 }
 
@@ -83,6 +91,9 @@ fn select_square(
     mut events: EventReader<PickingEvent>,
     mouse_button_inputs: Res<Input<MouseButton>>,
     mut selected_square: ResMut<SelectedSquare>,
+    mut selected_piece: ResMut<SelectedPiece>,
+    squares_query: Query<&Square>,
+    mut pieces_query: Query<(Entity, &mut Piece)>,
 )
 {
     // Only run if the left button is pressed
@@ -93,15 +104,59 @@ fn select_square(
     for event in events.iter() {
         match event {
             PickingEvent::Selection(e) => {
-                if let SelectionEvent::JustSelected(ent) = e {
-                    info!("Selecting square: {}", ent.id());
-                    selected_square.entity = Some(*ent);
+                info!("Selection");
+                if let SelectionEvent::JustSelected(selected_entity) = e {
+                    let current_square = if let Ok(current_square) = squares_query.get(*selected_entity) {
+                        current_square
+                    } else {
+                        // Nothing selected
+                        // not working
+                        info!("Deselecting.");
+                        selected_square.entity = None;
+                        selected_piece.entity = None;
+                        break;
+                    };
+
+                    info!("Selecting entity: {}", selected_entity.id());
+                    selected_square.entity = Some(*selected_entity);
+
+                    if let Some(selected_piece_entity) = selected_piece.entity {
+                        // a piece is already selected, move it to the selected square
+                        info!("Piece selected and square selected");
+
+                        let pieces_vec = pieces_query.iter_mut().map(|(_, piece)| *piece).collect();
+                        if let Ok((_piece_entity, mut piece)) = pieces_query.get_mut(selected_piece_entity)
+                        {
+                            if piece.is_move_valid((current_square.x, current_square.y), pieces_vec) {
+                                info!("Moving piece from ({},{}) to ({},{})",
+                                piece.x, piece.y, current_square.x, current_square.y );
+                                piece.x = current_square.x;
+                                piece.y = current_square.y;
+                            }
+                        }
+                        selected_square.entity = None;
+                        selected_piece.entity = None;
+                    } else if selected_piece.entity.is_none() {
+                        // no piece is selected
+                        // we check if on this square stands a piece
+                        for (piece_entity, piece) in pieces_query.iter_mut() {
+                            if piece.x == current_square.x && piece.y == current_square.y {
+                                // piece_entity is now the entity in the same square
+                                selected_piece.entity = Some(piece_entity);
+                                info!("Selecting piece: {}", piece_entity.id());
+                            }
+                        }
+                    }
                 } else {
-                    info!("Deselecting.");
-                    selected_square.entity = None;
+                    //info!("Hello from deselect");
                 }
-            },
-            _ => {}
+            }
+            PickingEvent::Hover(_) => {
+                //info!("Hello from hover");
+            }
+            PickingEvent::Clicked(_) => {
+                //info!("Hello from clicked");
+            }
         }
     }
 }

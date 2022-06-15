@@ -65,7 +65,7 @@ fn main() {
         //.add_plugin(DebugCursorPickingPlugin) // <- Adds the green debug cursor.
         //.add_plugin(DebugEventsPickingPlugin) // <- Adds debug event logging.
         .add_plugin(borad::BoardPlugin)
+        .add_plugin(pieces::PiecesPlugin)
         .add_startup_system(setup)
-        .add_startup_system(pieces::create_pieces)
         .run();
 }
