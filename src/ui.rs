@@ -1,4 +1,4 @@
-use crate::{borad::*, pieces::*};
+use crate::borad::*;
 use bevy::prelude::*;
 
 // Component to mark the Text entity
@@ -62,10 +62,7 @@ fn next_move_text_update(
     for mut text in query.iter_mut() {
         text.sections[0].value = format!(
             "Next move: {}",
-            match turn.0 {
-                PieceColor::White => "White",
-                PieceColor::Black => "Black",
-            }
+            turn.get_current_turn()
         );
     }
 }
