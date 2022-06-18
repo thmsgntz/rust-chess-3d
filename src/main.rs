@@ -1,5 +1,6 @@
 mod pieces;
 mod borad;
+mod ui;
 
 use bevy::prelude::*;
 use bevy::window::PresentMode;
@@ -64,6 +65,7 @@ fn main() {
         .add_plugins(DefaultPickingPlugins)// <- Adds Picking, Interaction, and Highlighting plugins.
         //.add_plugin(DebugCursorPickingPlugin) // <- Adds the green debug cursor.
         //.add_plugin(DebugEventsPickingPlugin) // <- Adds debug event logging.
+        .add_plugin(ui::UIPlugin)
         .add_plugin(borad::BoardPlugin)
         .add_plugin(pieces::PiecesPlugin)
         .add_startup_system(setup)

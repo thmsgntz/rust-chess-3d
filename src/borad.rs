@@ -4,7 +4,7 @@ use bevy_mod_picking::*;
 
 use crate::pieces::*;
 
-struct PlayerTurn(PieceColor);
+pub struct PlayerTurn(pub(crate) PieceColor);
 
 impl Default for PlayerTurn {
     fn default() -> Self {
