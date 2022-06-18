@@ -3,11 +3,21 @@ use bevy_mod_picking::*;
 
 use crate::pieces::*;
 
+struct PlayerTurn(PieceColor);
+
+impl Default for PlayerTurn {
+    fn default() -> Self {
+        Self(PieceColor::White)
+    }
+}
+
 pub struct BoardPlugin;
 impl Plugin for BoardPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<SelectedSquare>()
+        app
+            .init_resource::<SelectedSquare>()
             .init_resource::<SelectedPiece>()
+            .init_resource::<PlayerTurn>()
             .add_startup_system(create_board)
             .add_system_to_stage(CoreStage::PostUpdate, select_square);
     }
@@ -93,6 +103,7 @@ fn select_square(
     mouse_button_inputs: Res<Input<MouseButton>>,
     mut selected_square: ResMut<SelectedSquare>,
     mut selected_piece: ResMut<SelectedPiece>,
+    mut turn: ResMut<PlayerTurn>,
     squares_query: Query<&Square>,
     mut pieces_query: Query<(Entity, &mut Piece, &Children)>,
 )
@@ -164,6 +175,11 @@ fn select_square(
 
                                 piece.x = current_square.x;
                                 piece.y = current_square.y;
+
+                                turn.0 = match turn.0 {
+                                    PieceColor::White => PieceColor::Black,
+                                    PieceColor::Black => PieceColor::White,
+                                }
                             }
                         }
                         selected_square.entity = None;
@@ -172,7 +188,10 @@ fn select_square(
                         // no piece is selected
                         // we check if on this square stands a piece
                         for (piece_entity, piece, _) in pieces_query.iter_mut() {
-                            if piece.x == current_square.x && piece.y == current_square.y {
+                            if piece.x == current_square.x
+                                && piece.y == current_square.y
+                                && piece.color == turn.0
+                            {
                                 // piece_entity is now the entity in the same square
                                 selected_piece.entity = Some(piece_entity);
                                 info!("Selecting piece: {}", piece_entity.id());
