@@ -1,3 +1,4 @@
+use bevy::app::AppExit;
 use bevy::prelude::*;
 use bevy_mod_picking::*;
 
@@ -100,6 +101,7 @@ pub fn create_board (
 fn select_square(
     mut commands: Commands,
     mut events: EventReader<PickingEvent>,
+    mut app_exit_events: EventWriter<AppExit>,
     mouse_button_inputs: Res<Input<MouseButton>>,
     mut selected_square: ResMut<SelectedSquare>,
     mut selected_piece: ResMut<SelectedPiece>,
@@ -164,6 +166,18 @@ fn select_square(
                                         && other_piece.y == current_square.y
                                         && other_piece.color != piece.color
                                     {
+                                        // If the king is taken, we should exit
+                                        if other_piece.piece_type == PieceType::King {
+                                            println!(
+                                                "{} won! Thanks for playing!",
+                                                match turn.0 {
+                                                    PieceColor::White => "White",
+                                                    PieceColor::Black => "Black",
+                                                }
+                                            );
+                                            app_exit_events.send(AppExit);
+                                        }
+
                                         // Despawn piece
                                         commands.entity(other_entity).despawn();
                                         // Despawn all of it's children
