@@ -88,18 +88,20 @@ pub fn create_board (
 }
 
 fn select_square(
+    mut commands: Commands,
     mut events: EventReader<PickingEvent>,
     mouse_button_inputs: Res<Input<MouseButton>>,
     mut selected_square: ResMut<SelectedSquare>,
     mut selected_piece: ResMut<SelectedPiece>,
     squares_query: Query<&Square>,
-    mut pieces_query: Query<(Entity, &mut Piece)>,
+    mut pieces_query: Query<(Entity, &mut Piece, &Children)>,
 )
 {
     // Only run if the left button is pressed
     if !mouse_button_inputs.just_pressed(MouseButton::Left) {
         return;
     }
+
 
     for event in events.iter() {
         match event {
@@ -124,12 +126,42 @@ fn select_square(
                         // a piece is already selected, move it to the selected square
                         info!("Piece selected and square selected");
 
-                        let pieces_vec = pieces_query.iter_mut().map(|(_, piece)| *piece).collect();
-                        if let Ok((_piece_entity, mut piece)) = pieces_query.get_mut(selected_piece_entity)
+                        let pieces_vec = pieces_query
+                            .iter_mut()
+                            .map(|(_, piece, _)| *piece)
+                            .collect();
+
+                        let pieces_entity_vec: Vec<(Entity, Piece, Vec<Entity>)> = pieces_query
+                            .iter_mut()
+                            .map(|(entity, piece, children)| {
+                                (
+                                    entity,
+                                    *piece,
+                                    children.iter().map(|entity| *entity).collect(),
+                                )
+                            })
+                            .collect();
+
+                        if let Ok((_piece_entity, mut piece, _)) = pieces_query.get_mut(selected_piece_entity)
                         {
                             if piece.is_move_valid((current_square.x, current_square.y), pieces_vec) {
                                 info!("Moving piece from ({},{}) to ({},{})",
                                 piece.x, piece.y, current_square.x, current_square.y );
+
+                                for (other_entity, other_piece, other_children) in pieces_entity_vec {
+                                    if other_piece.x == current_square.x
+                                        && other_piece.y == current_square.y
+                                        && other_piece.color != piece.color
+                                    {
+                                        // Despawn piece
+                                        commands.entity(other_entity).despawn();
+                                        // Despawn all of it's children
+                                        for child in other_children {
+                                            commands.entity(child).despawn();
+                                        }
+                                    }
+                                }
+
                                 piece.x = current_square.x;
                                 piece.y = current_square.y;
                             }
@@ -139,7 +171,7 @@ fn select_square(
                     } else if selected_piece.entity.is_none() {
                         // no piece is selected
                         // we check if on this square stands a piece
-                        for (piece_entity, piece) in pieces_query.iter_mut() {
+                        for (piece_entity, piece, _) in pieces_query.iter_mut() {
                             if piece.x == current_square.x && piece.y == current_square.y {
                                 // piece_entity is now the entity in the same square
                                 selected_piece.entity = Some(piece_entity);
