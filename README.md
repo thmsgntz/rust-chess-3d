@@ -1,4 +1,7 @@
 
+![Crates.io](https://img.shields.io/crates/v/bevy?label=bevy%20crates.io)
+[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](./License.md)
+
 # Bevy Chess 
 
 Learning Rust+Bevy following this tutorial from [guimcaballero/bevy_chess](https://github.com/guimcaballero/bevy_chess) originally 
