@@ -14,4 +14,4 @@ I am still learning Rust+Bevy so the code is not perfect, but it's functional.
 
 ## License
 
-Bevy Chess is published under a [MIT License](/License.md).
+Bevy Chess is published under a [MIT License](/License.md). 
