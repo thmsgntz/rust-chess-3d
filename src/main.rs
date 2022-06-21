@@ -1,5 +1,7 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 mod pieces;
-mod borad;
+mod board;
 mod ui;
 
 use bevy::prelude::*;
@@ -9,7 +11,7 @@ use bevy_mod_picking::*;
 mod settings {
     use bevy::window::WindowMode;
 
-    pub static NAME: &str = "Chess Game by Buer Games";
+    pub static NAME: &str = "Chess Game in RustxBevy!";
     pub const WINDOW_WIDTH: f32 = 1200.;
     pub const WINDOW_HEIGHT: f32 = 600.;
     pub const WINDOW_POSITION_X: f32 = 50.;
@@ -66,7 +68,7 @@ fn main() {
         //.add_plugin(DebugCursorPickingPlugin) // <- Adds the green debug cursor.
         //.add_plugin(DebugEventsPickingPlugin) // <- Adds debug event logging.
         .add_plugin(ui::UIPlugin)
-        .add_plugin(borad::BoardPlugin)
+        .add_plugin(board::BoardPlugin)
         .add_plugin(pieces::PiecesPlugin)
         .add_startup_system(setup)
         .run();

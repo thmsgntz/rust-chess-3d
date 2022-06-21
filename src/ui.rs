@@ -1,4 +1,4 @@
-use crate::borad::*;
+use crate::board::*;
 use bevy::prelude::*;
 
 // Component to mark the Text entity
