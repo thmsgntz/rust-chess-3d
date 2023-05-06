@@ -6,8 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.7.0"
-bevy_mod_picking = "0.6.1"  # https://github.com/aevyrie/bevy_mod_picking/
+bevy = "0.10"
+bevy_mod_picking = "0.12"  # https://github.com/aevyrie/bevy_mod_picking/
+bevy_tweening = "0.7"
 
 # Enable only a small amount of optimization in debug mode
 # See: https://bevy-cheatbook.github.io/pitfalls/performance.html

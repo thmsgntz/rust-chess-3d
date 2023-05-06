@@ -14,55 +14,43 @@ impl Plugin for UIPlugin {
 }
 
 /// Initialize UiCamera and text
-fn init_next_move_text(
-    mut commands: Commands,
-    asset_server: ResMut<AssetServer>,
-) {
-    let font = asset_server.load("ressources/FiraSans-Bold.ttf");
-
-    commands.spawn_bundle(UiCameraBundle::default());
+fn init_next_move_text(mut commands: Commands, asset_server: ResMut<AssetServer>) {
+    let font = asset_server.load("resources/FiraSans-Bold.ttf");
 
     // See: https://github.com/bevyengine/bevy/blob/main/examples/ui/text.rs#L34
-    commands.spawn_bundle(
-            TextBundle {
-                style: Style {
-                    align_self: AlignSelf::FlexEnd,
-                    position_type: PositionType::Absolute,
-                    position: Rect {
-                        bottom: Val::Px(5.0),
-                        right: Val::Px(15.0),
-                        ..default()
-                    },
-                    ..Default::default()
+    commands
+        .spawn(TextBundle {
+            style: Style {
+                align_self: AlignSelf::FlexEnd,
+                position_type: PositionType::Absolute,
+                position: UiRect {
+                    bottom: Val::Px(5.0),
+                    right: Val::Px(15.0),
+                    ..default()
                 },
-                text: Text::with_section(
-                    String::from("Next move: White"),
-                     TextStyle {
-                                font: font.clone(),
-                                font_size: 42.0,
-                                color: Color::BLACK
-                            },
-                    TextAlignment {
-                     horizontal: HorizontalAlign::Center,
-                        ..default()
-                    }),
                 ..Default::default()
-            })
+            },
+            text: Text::from_section(
+                String::from("Next move: White"),
+                TextStyle {
+                    font,
+                    font_size: 42.0,
+                    color: Color::BLACK,
+                },
+            )
+            .with_alignment(TextAlignment::Center),
+            ..Default::default()
+        })
         .insert(NextMoveText);
 }
 
-fn next_move_text_update(
-    turn: Res<PlayerTurn>,
-    mut query: Query<&mut Text, With<NextMoveText>>,
-) {
+fn next_move_text_update(turn: Res<PlayerTurn>, mut query: Query<&mut Text, With<NextMoveText>>) {
     if !turn.is_changed() {
-        return
+        return;
     }
 
     for mut text in query.iter_mut() {
-        text.sections[0].value = format!(
-            "Next move: {}",
-            turn.get_current_turn()
-        );
+        text.sections[0].value = format!("Next move: {}", turn.get_current_turn());
     }
 }
+
