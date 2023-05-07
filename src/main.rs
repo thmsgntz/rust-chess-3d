@@ -11,13 +11,12 @@ use bevy_mod_picking::*;
 use bevy_tweening::TweeningPlugin;
 
 mod settings {
-    use bevy::window::WindowMode;
+    use bevy::window::{MonitorSelection, WindowMode, WindowPosition};
 
     pub static NAME: &str = "Chess Game in RustxBevy!";
     pub const WINDOW_WIDTH: f32 = 1200.;
     pub const WINDOW_HEIGHT: f32 = 600.;
-    pub const WINDOW_POSITION_X: i32 = 50;
-    pub const WINDOW_POSITION_Y: i32 = 25;
+    pub const WINDOW_POSITION: WindowPosition = WindowPosition::Centered(MonitorSelection::Current);
     pub const WINDOW_MODE: WindowMode = WindowMode::Windowed;
 }
 
@@ -64,10 +63,7 @@ fn main() {
             primary_window: Some(Window {
                 title: settings::NAME.parse().unwrap(),
                 resolution: WindowResolution::new(settings::WINDOW_WIDTH, settings::WINDOW_HEIGHT),
-                position: WindowPosition::At(IVec2::new(
-                    settings::WINDOW_POSITION_X,
-                    settings::WINDOW_POSITION_Y,
-                )),
+                position: settings::WINDOW_POSITION,
                 mode: settings::WINDOW_MODE,
                 present_mode: PresentMode::Fifo,
                 ..Default::default()
