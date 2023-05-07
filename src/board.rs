@@ -78,8 +78,8 @@ impl FromWorld for SquareMaterials {
             .get_resource_mut::<Assets<StandardMaterial>>()
             .unwrap();
         SquareMaterials {
-            black_color: materials.add(Color::rgb(0., 0.1, 0.1).into()),
-            white_color: materials.add(Color::rgb(1., 0.9, 0.9).into()),
+            black_color: materials.add(Color::rgb(0., 0., 0.).into()),
+            white_color: materials.add(Color::rgb(1., 1., 1.).into()),
         }
     }
 }

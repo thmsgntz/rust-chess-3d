@@ -57,6 +57,7 @@ fn setup(mut commands: Commands) {
 fn main() {
     App::new()
         // Set antialiasing to use 4 samples
+        .insert_resource(ClearColor(Color::hex("A0A0A0").unwrap()))
         .insert_resource(Msaa::Sample4)
         // Set WindowDescriptor Resource to change title and size
         .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -84,4 +85,3 @@ fn main() {
         .add_startup_system(setup)
         .run();
 }
-
