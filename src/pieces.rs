@@ -145,22 +145,19 @@ impl Piece {
 fn move_pieces(mut commands: Commands, mut query: Query<(Entity, &mut Transform, &Piece)>) {
     for (entity, transform, piece) in query.iter_mut() {
         let target_position = Vec3::new(piece.x as f32, 0., piece.y as f32);
-        let direction = target_position - transform.translation;
 
-        if direction.length() > 0.1 {
-            let tween = Tween::new(
-                EaseFunction::QuadraticOut,
-                Duration::from_secs_f32(0.2),
-                TransformPositionLens {
-                    start: transform.translation,
-                    end: target_position,
-                },
-            );
+        let tween = Tween::new(
+            EaseFunction::QuadraticOut,
+            Duration::from_secs_f32(0.2),
+            TransformPositionLens {
+                start: transform.translation,
+                end: target_position,
+            },
+        );
 
-            commands
-                .entity(entity)
-                .insert(Animator::<Transform>::new(tween));
-        }
+        commands
+            .entity(entity)
+            .insert(Animator::<Transform>::new(tween));
     }
 }
 
