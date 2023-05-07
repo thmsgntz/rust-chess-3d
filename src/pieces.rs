@@ -183,7 +183,7 @@ fn color_of_piece(pos: (u8, u8), pieces: &[Piece]) -> Option<PieceColor> {
         .map(|p| p.color)
 }
 
-fn is_path_empty(begin: (u8, u8), end: (u8, u8), pieces: &Vec<Piece>) -> bool {
+fn is_path_empty(begin: (u8, u8), end: (u8, u8), pieces: &[Piece]) -> bool {
     if begin.0 == end.0 {
         is_column_empty(begin, end, pieces)
     } else if begin.1 == end.1 {
