@@ -179,45 +179,48 @@ fn move_pieces(mut commands: Commands, mut query: Query<(Entity, &mut Transform,
 // }
 
 /// Returns None if square is empty, returns a Some with the color if not
-fn color_of_piece(pos: (u8, u8), pieces: &Vec<Piece>) -> Option<PieceColor> {
-    for piece in pieces {
-        if piece.x == pos.0 && piece.y == pos.1 {
-            return Some(piece.color);
-        }
-    }
-    None
+fn color_of_piece(pos: (u8, u8), pieces: &[Piece]) -> Option<PieceColor> {
+    pieces
+        .iter()
+        .find(|p| p.x == pos.0 && p.y == pos.1)
+        .map(|p| p.color)
 }
 
 fn is_path_empty(begin: (u8, u8), end: (u8, u8), pieces: &Vec<Piece>) -> bool {
-    // Same column
     if begin.0 == end.0 {
-        for piece in pieces {
-            if piece.x == begin.0
-                && ((piece.y > begin.1 && piece.y < end.1)
-                    || (piece.y > end.1 && piece.y < begin.1))
-            {
-                return false;
-            }
-        }
+        is_column_empty(begin, end, pieces)
+    } else if begin.1 == end.1 {
+        is_row_empty(begin, end, pieces)
+    } else {
+        is_diagonal_empty(begin, end, pieces)
     }
-    // Same row
-    if begin.1 == end.1 {
-        for piece in pieces {
-            if piece.y == begin.1
-                && ((piece.x > begin.0 && piece.x < end.0)
-                    || (piece.x > end.0 && piece.x < begin.0))
-            {
-                return false;
-            }
-        }
+}
+
+fn is_column_empty(begin: (u8, u8), end: (u8, u8), pieces: &[Piece]) -> bool {
+    !pieces.iter().any(|p| {
+        p.x == begin.0 && ((p.y > begin.1 && p.y < end.1) || (p.y > end.1 && p.y < begin.1))
+    })
+}
+
+fn is_row_empty(begin: (u8, u8), end: (u8, u8), pieces: &[Piece]) -> bool {
+    !pieces.iter().any(|p| {
+        p.y == begin.1 && ((p.x > begin.0 && p.x < end.0) || (p.x > end.0 && p.x < begin.0))
+    })
+}
+
+fn is_diagonal_empty(begin: (u8, u8), end: (u8, u8), pieces: &[Piece]) -> bool {
+    let (x_diff, y_diff) = (
+        (begin.0 as i8 - end.0 as i8).abs(),
+        (begin.1 as i8 - end.1 as i8).abs(),
+    );
+
+    if x_diff != y_diff {
+        return false;
     }
 
-    // Diagonals
-    let x_diff = (begin.0 as i8 - end.0 as i8).abs();
-    let y_diff = (begin.1 as i8 - end.1 as i8).abs();
-    if x_diff == y_diff {
-        for i in 1..x_diff {
-            let pos = if begin.0 < end.0 && begin.1 < end.1 {
+    (1..x_diff)
+        .map(|i| {
+            if begin.0 < end.0 && begin.1 < end.1 {
                 // left bottom - right top
                 (begin.0 + i as u8, begin.1 + i as u8)
             } else if begin.0 < end.0 && begin.1 > end.1 {
@@ -230,15 +233,9 @@ fn is_path_empty(begin: (u8, u8), end: (u8, u8), pieces: &Vec<Piece>) -> bool {
                 // begin.0 > end.0 && begin.1 > end.1
                 // right top - left bottom
                 (begin.0 - i as u8, begin.1 - i as u8)
-            };
-
-            if color_of_piece(pos, pieces).is_some() {
-                return false;
             }
-        }
-    }
-
-    true
+        })
+        .all(|pos| color_of_piece(pos, pieces).is_none())
 }
 
 fn create_pieces(
@@ -649,4 +646,3 @@ pub fn spawn_pawn(
             });
         });
 }
-
